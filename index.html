@@ -2,24 +2,18 @@
 <html lang="ar" dir="rtl">
 <head>
     <meta charset="UTF-8">
-    <title>NOHA_NET | بروتوكول نهى</title>
+    <title>NOHA_NET | نسيج نهى الدائم</title>
+    <script src="https://cdn.jsdelivr.net/npm/gun/gun.js"></script>
     <style>
         :root { --noha-red: #bc0000; --bg: #fdfdfd; --dark: #111; }
-        body { 
-            background: var(--bg);
-            background-image: radial-gradient(#ccc 0.5px, transparent 0.5px), radial-gradient(#ccc 0.5px, #fdfdfd 0.5px);
-            background-size: 20px 20px;
-            font-family: Arial, sans-serif; margin: 0; color: #111; text-align: center; 
-        }
+        body { background: var(--bg); font-family: Arial, sans-serif; margin: 0; color: #111; text-align: center; }
         .header { background: var(--dark); color: white; padding: 60px 0; border-bottom: 8px solid var(--noha-red); }
         .logo { font-size: 70px; color: var(--noha-red); text-decoration: none; font-weight: 900; font-family: 'Impact', sans-serif; text-shadow: 4px 4px 0px #000; }
         .container { max-width: 1000px; margin: 0 auto; padding: 20px; }
         .search-input { width: 80%; padding: 15px; border-radius: 30px; border: 2px solid var(--dark); font-size: 18px; margin-top: -30px; box-shadow: 0 10px 20px rgba(0,0,0,0.1); outline: none; text-align: center; }
-        
         .main-table { width: 100%; border-collapse: collapse; background: white; margin-top: 40px; border-radius: 10px; overflow: hidden; box-shadow: 0 5px 15px rgba(0,0,0,0.05); }
         .main-table th { background: #1a1a1a; color: white; padding: 15px; }
         .main-table td { border-bottom: 1px solid #eee; padding: 15px; }
-
         .upload-card { background: #fff; border: 3px dashed var(--noha-red); padding: 30px; max-width: 500px; margin: 50px auto; border-radius: 15px; }
         .btn-deploy { background: var(--noha-red); color: white; border: none; padding: 15px 30px; cursor: pointer; border-radius: 8px; width: 100%; font-size: 18px; font-weight: bold; margin-top: 15px; }
         .status { margin-top: 10px; font-weight: bold; color: var(--noha-red); }
@@ -29,66 +23,79 @@
 
     <div class="header">
         <div class="logo">☠️ NOHA_NET</div>
-        <p style="color:#ffd700; letter-spacing: 3px;">بروتوكول نهى للسيادة الرقمية</p>
+        <p style="color:#ffd700; letter-spacing: 3px;">بروتوكول نهى للسيادة الرقمية (سجل دائم)</p>
     </div>
 
     <div class="container">
-        <input type="text" class="search-input" placeholder="ابحث في نسيج نهى...">
+        <input type="text" class="search-input" id="pirateSearch" placeholder="ابحث في نسيج نهى..." onkeyup="filter()">
 
         <table class="main-table">
             <thead>
-                <tr><th>الكنز</th><th>تحميل</th></tr>
+                <tr><th>الكنز (الملف)</th><th>تحميل</th></tr>
             </thead>
             <tbody id="bountyList">
                 </tbody>
         </table>
 
         <div class="upload-card">
-            <h3>⚓ تعميد كنز جديد من هاتفك</h3>
+            <h3>⚓ تعميد كنز جديد في النسيج</h3>
             <input type="file" id="filePicker" style="width:100%; margin-bottom:10px;">
-            <button class="btn-deploy" onclick="uploadToPinata()">نشر سيادي في الشبكة</button>
+            <button class="btn-deploy" onclick="uploadToPinata()">نشر سيادي دائم</button>
             <div id="status" class="status"></div>
         </div>
     </div>
 
     <script>
-        // مفاتيح رزين (مخبأة في الكود للتشغيل المباشر)
+        // تفعيل قاعدة البيانات اللامركزية (نسيج الأقران)
+        const gun = Gun(['https://gun-manhattan.herokuapp.com/gun']);
+        const mesh = gun.get('noha_net_razin_v1');
+
         const apiKey = "9b0a4f8efc8be1ae3b76";
         const apiSecret = "9940936fe67a2868fe6305f82c685d518e8dfbe3f79c0996dcb528ab644eedfe";
+
+        // استدعاء البيانات من النسيج فور فتح الصفحة (الحل لمشكلة الرفرش)
+        mesh.map().on((data, id) => {
+            if(data && data.name && data.hash) {
+                renderBounty(data.name, data.hash, id);
+            }
+        });
 
         async function uploadToPinata() {
             const fileInput = document.getElementById('filePicker');
             const status = document.getElementById('status');
-            if (fileInput.files.length === 0) return alert("اختر ملفاً يا قرصان!");
+            if (fileInput.files.length === 0) return alert("اختر ملفاً!");
 
-            status.innerText = "⏳ جاري الرفع لنسيج IPFS العالمي...";
+            status.innerText = "⏳ جاري الرفع والتدوين في النسيج...";
             const formData = new FormData();
             formData.append('file', fileInput.files[0]);
 
             try {
                 const response = await fetch('https://api.pinata.cloud/pinning/pinFileToIPFS', {
                     method: 'POST',
-                    headers: {
-                        'pinata_api_key': apiKey,
-                        'pinata_secret_api_key': apiSecret
-                    },
+                    headers: { 'pinata_api_key': apiKey, 'pinata_secret_api_key': apiSecret },
                     body: formData
                 });
 
                 const result = await response.json();
                 if (result.IpfsHash) {
-                    status.innerText = "✅ تم النشر بنجاح!";
-                    addBountyToTable(fileInput.files[0].name, result.IpfsHash);
+                    // تدوين الكنز في النسيج اللامركزي لكي يراه الجميع للأبد
+                    mesh.set({ name: fileInput.files[0].name, hash: result.IpfsHash, time: Date.now() });
+                    status.innerText = "✅ تم النشر والحفظ في السجل العالمي!";
                 }
-            } catch (error) {
-                status.innerText = "❌ فشل الرفع. تأكد من الإنترنت.";
-            }
+            } catch (error) { status.innerText = "❌ خطأ في الاتصال."; }
         }
 
-        function addBountyToTable(name, hash) {
+        function renderBounty(name, hash, id) {
             const tbody = document.getElementById('bountyList');
-            const row = `<tr><td><strong>${name}</strong><br><small>${hash}</small></td><td><a href="https://gateway.pinata.cloud/ipfs/${hash}" target="_blank" style="font-size:25px; text-decoration:none;">🧲</a></td></tr>`;
+            if (document.getElementById(id)) return; // منع التكرار
+            const row = `<tr id="${id}"><td><strong>${name}</strong><br><small>${hash}</small></td><td><a href="https://gateway.pinata.cloud/ipfs/${hash}" target="_blank" style="font-size:25px; text-decoration:none;">🧲</a></td></tr>`;
             tbody.innerHTML = row + tbody.innerHTML;
+        }
+
+        function filter() {
+            let q = document.getElementById('pirateSearch').value.toLowerCase();
+            let rows = document.getElementById('bountyList').getElementsByTagName('tr');
+            for (let r of rows) { r.style.display = r.innerText.toLowerCase().includes(q) ? "" : "none"; }
         }
     </script>
 </body>
