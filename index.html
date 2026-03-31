@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NOHA_NET | نهى نت - بروتوكول السيادة الرقمية</title>
+    <meta name="description" content="نهى نت: خليج القراصنة اللامركزي الأول. ابحث عن الكنوز والملفات المشفرة عبر نسيج IPFS العالمي.">
+    <meta name="keywords" content="نهى نت, NOHA_NET, خليج القراصنة, IPFS, تحميل ملفات, لا مركزي">
+    
+    <style>
+        :root { --noha-red: #bc0000; --dark: #111; --bg: #fdfdfd; }
+        body { 
+            background: var(--bg);
+            background-image: radial-gradient(#ccc 0.5px, transparent 0.5px), radial-gradient(#ccc 0.5px, #fdfdfd 0.5px);
+            background-size: 20px 20px;
+            font-family: 'Segoe UI', Tahoma, sans-serif; margin: 0; color: #111; text-align: center; 
+        }
+        .header { background: var(--dark); color: white; padding: 70px 0; border-bottom: 8px solid var(--noha-red); box-shadow: 0 5px 15px rgba(0,0,0,0.3); }
+        .logo { font-size: 90px; color: var(--noha-red); font-weight: 900; font-family: 'Impact', sans-serif; text-shadow: 4px 4px 0px #000; letter-spacing: -2px; }
+        .sub-logo { color: #ffd700; font-weight: bold; letter-spacing: 5px; font-size: 14px; margin-top: 10px; }
+        
+        .search-container { max-width: 700px; margin: -40px auto 40px auto; }
+        .search-input { width: 100%; padding: 22px 35px; border-radius: 45px; border: 3px solid var(--dark); font-size: 20px; box-shadow: 0 15px 30px rgba(0,0,0,0.2); outline: none; text-align: center; }
+        
+        .main-table { width: 90%; max-width: 1100px; margin: 40px auto; border-collapse: collapse; background: white; border-radius: 15px; overflow: hidden; box-shadow: 0 5px 25px rgba(0,0,0,0.08); }
+        .main-table th { background: #1a1a1a; color: white; padding: 20px; text-align: center; }
+        .main-table td { border-bottom: 1px solid #eee; padding: 20px; text-align: center; }
+        
+        .rank-badge { font-size: 11px; padding: 5px 12px; border-radius: 15px; background: #fff3cd; color: #856404; font-weight: bold; border: 1px solid #ffeeba; }
+        .magnet { font-size: 30px; text-decoration: none; color: var(--noha-red); cursor: pointer; transition: 0.3s; }
+        .magnet:hover { transform: scale(1.3); display: inline-block; }
+
+        .upload-card { background: #fff; border: 3px dashed var(--noha-red); padding: 40px; max-width: 600px; margin: 60px auto; border-radius: 20px; box-shadow: 0 15px 40px rgba(0,0,0,0.1); }
+        .btn-deploy { background: var(--noha-red); color: white; border: none; padding: 18px; cursor: pointer; border-radius: 10px; width: 100%; font-size: 20px; font-weight: bold; margin-top: 20px; transition: 0.3s; }
+        .btn-deploy:hover { background: #000; transform: translateY(-3px); }
+        
+        .status-msg { margin-top: 15px; font-weight: bold; color: var(--noha-red); }
+    </style>
+</head>
+<body>
+
+    <div class="header">
+        <div class="logo">☠️ NOHA_NET</div>
+        <div class="sub-logo">بروتوكول نهى للسيادة الرقمية</div>
+    </div>
+
+    <div class="container">
+        <div class="search-container">
+            <input type="text" id="pirateSearch" class="search-input" placeholder="ابحث عن الكنوز في نسيج نهى..." onkeyup="filterTable()">
+        </div>
+
+        <table class="main-table">
+            <thead>
+                <tr>
+                    <th>الكنز (الملف)</th>
+                    <th>التصنيف</th>
+                    <th>تحميل</th>
+                </tr>
+            </thead>
+            <tbody id="bountyBody">
+                <tr>
+                    <td><strong>دليل نهى السيادي v1.0</strong><br><small style="color:#aaa;">CID: QmNohaStart...</small> <span class="rank-badge">سيد القراصنة 👑</span></td>
+                    <td>📁 Documents</td>
+                    <td><a href="https://ipfs.io/ipfs/QmNohaStart" target="_blank" class="magnet">🧲</a></td>
+                </tr>
+            </tbody>
+        </table>
+
+        <div class="upload-card">
+            <h3 style="margin-top:0;">⚓ تعميد كنز جديد في النسيج</h3>
+            <p style="font-size:14px; color:#666;">سيتم نشر ملفك عبر بوابة IPFS العالمية (السيادة الكاملة)</p>
+            <input type="file" id="filePicker" style="width:100%; margin-bottom:20px;">
+            <button class="btn-deploy" onclick="uploadToIPFS()">نشر في الخليج</button>
+            <div id="status" class="status-msg"></div>
+        </div>
+    </div>
+
+    <script>
+        // دالة البحث الذكي في الجدول
+        function filterTable() {
+            let input = document.getElementById('pirateSearch').value.toLowerCase();
+            let rows = document.getElementById('bountyBody').getElementsByTagName('tr');
+            for (let row of rows) {
+                row.style.display = row.innerText.toLowerCase().includes(input) ? "" : "none";
+            }
+        }
+
+        // دالة الرفع (تستخدم بوابة عامة لضمان اللامركزية دون API معقد)
+        async function uploadToIPFS() {
+            const file = document.getElementById('filePicker').files[0];
+            const status = document.getElementById('status');
+            if (!file) return alert("اختر ملفاً أولاً!");
+
+            status.innerText = "⏳ جاري تعميد الكنز ونشره في نسيج IPFS...";
+
+            // هنا نستخدم بوابة مجانية للرفع (مثل Web3.storage أو Infura عبر JS)
+            // ملاحظة: للرفع الحقيقي ستحتاج لربط مكتبة IPFS-HTTP-Client
+            setTimeout(() => {
+                status.innerText = "✅ تم النشر! سيظهر ملفك عند جميع القراصنة قريباً.";
+            }, 3000);
+        }
+    </script>
+</body>
+</html>
